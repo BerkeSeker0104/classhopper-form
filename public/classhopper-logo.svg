@@ -1,0 +1,28 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer circle -->
+  <circle
+    cx="20"
+    cy="20"
+    r="18"
+    stroke="white"
+    stroke-width="3"
+    fill="none"
+  />
+  <!-- Inner circle -->
+  <circle
+    cx="22"
+    cy="18"
+    r="8"
+    stroke="white"
+    stroke-width="3"
+    fill="none"
+  />
+  <!-- Stem -->
+  <path
+    d="M20 2 Q22 0 24 2"
+    stroke="white"
+    stroke-width="2"
+    stroke-linecap="round"
+    fill="none"
+  />
+</svg>

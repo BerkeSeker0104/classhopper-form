@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+	match /databases/{database}/documents {
+		// ---------------------------------------------------------
+		// Rowy rules start
+		// ---------------------------------------------------------
+		// Automatically generated and managed by Rowy
+		// ⚠️ Do not edit this block directly, as it will be overwritten
+		// To edit the security rules, please do it on different block or manage from rowy settings
+		// initialized on 9/24/2025
+		match /{collectionId}/{docId} {
+			allow read: if colRule(["classhopper-mobile"], ["ADMIN","EDITOR","VIEWER","OWNER"]);
+			allow create, update, delete: if colRule(["classhopper-mobile"], ["ADMIN","OWNER"]);
+			
+			function colRule(collections, roles){
+				return collectionId in collections && hasAnyRole(roles);
+			}
+			
+		}
+		// ---------------------------------------------------------
+		// Rowy rules end
+		// ---------------------------------------------------------
+		
+		// BEKLEME LİSTESİ İÇİN PUBLIC ERIŞIM
+		match /waitlist/{document} {
+			allow read, write: if true;
+		}
+		
+		// FORM SUBMISSIONS İÇİN PUBLIC ERIŞIM
+		match /formSubmissions/{submissionId} {
+			allow read: if hasAnyRole(["ADMIN", "OWNER", "EDITOR", "VIEWER"]); // Sadece adminler okuyabilir
+			allow write: if true; // Herkes form gönderebilir
+		}
+		
+		// SUBMISSIONS COLLECTION İÇİN ADMIN ERIŞIM
+		match /submissions/{submissionId} {
+			allow read: if request.auth != null; // Giriş yapmış herkes okuyabilir
+			allow write: if true; // Herkes form gönderebilir
+		}
+		
+		// Allow admins to read and write all documents
+		match /{document=**} {
+			allow read, write: if hasAnyRole(["ADMIN", "OWNER"]);
+		}
+		
+		// Rowy: Allow signed in users to read Rowy configuration and admins to write
+		match /_rowy_/{docId} {
+			allow read: if request.auth.token.roles.size() > 0;
+			allow write: if hasAnyRole(["ADMIN", "OWNER"]);
+			match /{document=**} {
+				allow read: if request.auth.token.roles.size() > 0;
+				allow write: if hasAnyRole(["ADMIN", "OWNER"]);
+			}
+		}
+		// Rowy: Allow users to edit their settings
+		match /_rowy_/userManagement/users/{userId} {
+			allow get, update, delete: if isDocOwner(userId);
+			allow create: if request.auth.token.roles.size() > 0;
+		}
+		// Rowy: Allow public to read public Rowy configuration
+		match /_rowy_/publicSettings {
+			allow get: if true;
+		}
+		
+		// Rowy: Utility functions
+		function isDocOwner(docId) {
+			return request.auth != null && (request.auth.uid == resource.id || request.auth.uid == docId);
+		}
+		function hasAnyRole(roles) {
+			return request.auth != null && request.auth.token.roles.hasAny(roles);
+		}
+	}
+}

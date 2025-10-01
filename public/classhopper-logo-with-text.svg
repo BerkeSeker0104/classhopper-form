@@ -1,0 +1,36 @@
+<svg width="200" height="40" viewBox="0 0 200 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Apple Icon -->
+  <g transform="translate(0, 2)">
+    <!-- Outer circle -->
+    <circle
+      cx="20"
+      cy="20"
+      r="18"
+      stroke="white"
+      stroke-width="3"
+      fill="none"
+    />
+    <!-- Inner circle -->
+    <circle
+      cx="22"
+      cy="18"
+      r="8"
+      stroke="white"
+      stroke-width="3"
+      fill="none"
+    />
+    <!-- Stem -->
+    <path
+      d="M20 2 Q22 0 24 2"
+      stroke="white"
+      stroke-width="2"
+      stroke-linecap="round"
+      fill="none"
+    />
+  </g>
+  
+  <!-- Text -->
+  <text x="50" y="28" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white">
+    classhopper
+  </text>
+</svg>
