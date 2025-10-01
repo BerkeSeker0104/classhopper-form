@@ -23,7 +23,6 @@ export const ClasshopperLogo: React.FC<ClasshopperLogoProps> = ({
           height={size}
           priority
           className="object-contain"
-          style={{ width: 'auto', height: 'auto' }}
         />
       </div>
       

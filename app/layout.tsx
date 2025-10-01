@@ -27,7 +27,7 @@ export default function RootLayout({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-20">
               <div className="flex items-center">
-                <ClasshopperLogo size={96} className="text-primary-600" />
+                <ClasshopperLogo size={200} className="text-primary-600" />
               </div>
               <nav className="hidden md:flex space-x-8">
                 <a href="/" className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium">

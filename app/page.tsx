@@ -8,7 +8,7 @@ export default function HomePage() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <div className="flex justify-center mb-8">
-            <ClasshopperLogo size={240} className="text-primary-600" />
+            <ClasshopperLogo size={340} className="text-primary-600" />
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             <span className="block text-primary-600">Kayıt Formu</span>
