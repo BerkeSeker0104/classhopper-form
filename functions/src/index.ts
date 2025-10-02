@@ -266,13 +266,14 @@ app.post('/suggest-topic', async (req, res) => {
 
 // Form submission endpoint
 export const submitForm = functions.https.onRequest(async (req, res) => {
-  // CORS headers
+  // CORS headers - daha kapsamlı ayarlar
   res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.set('Access-Control-Max-Age', '3600');
 
   if (req.method === 'OPTIONS') {
-    res.status(204).send('');
+    res.status(200).send('');
     return;
   }
 

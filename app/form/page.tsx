@@ -163,22 +163,16 @@ export default function FormPage() {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/submit-form', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
+      // Doğrudan Firestore'a kaydet
+      const { firestoreService } = await import('@/lib/firestore');
+      const result = await firestoreService.saveSubmission(data);
 
       if (result.success) {
         toast.success('Bilgileriniz başarıyla kaydedildi!');
         // Success sayfasına yönlendir
         router.push('/form/success');
       } else {
-        toast.error(result.message || 'Bir hata oluştu');
+        toast.error('Veri kaydedilirken hata oluştu');
       }
     } catch (error) {
       console.error('Form submission error:', error);
