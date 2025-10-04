@@ -38,6 +38,7 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterUniversity, setFilterUniversity] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Firestore'dan veri çek
   useEffect(() => {
@@ -80,6 +81,32 @@ export default function AdminDashboard() {
 
   const uniqueUniversities = Array.from(new Set(submissions.map(s => s.university)));
   const uniqueCategories = Array.from(new Set(submissions.map(s => s.projectCategory)));
+
+  // Silme fonksiyonu
+  const handleDelete = async (id: string) => {
+    if (!confirm('Bu kaydı silmek istediğinizden emin misiniz?')) {
+      return;
+    }
+
+    setDeletingId(id);
+    try {
+      const { firestoreService } = await import('@/lib/firestore');
+      const result = await firestoreService.deleteSubmission(id);
+      
+      if (result.success) {
+        // Başarılı silme - state'i güncelle
+        setSubmissions(prev => prev.filter(submission => submission.id !== id));
+        alert('Kayıt başarıyla silindi!');
+      } else {
+        alert('Silme işlemi başarısız: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error deleting submission:', error);
+      alert('Silme işlemi sırasında hata oluştu!');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const exportToCSV = () => {
     if (filteredSubmissions.length === 0) return;
@@ -327,14 +354,14 @@ export default function AdminDashboard() {
                             {submission.projectSummary}
                           </div>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {submission.projectTechTags.slice(0, 3).map(tag => (
+                            {(submission.projectTechTags || []).slice(0, 3).map(tag => (
                               <span key={tag} className="badge badge-outline text-xs">
                                 {tag}
                               </span>
                             ))}
-                            {submission.projectTechTags.length > 3 && (
+                            {(submission.projectTechTags || []).length > 3 && (
                               <span className="text-xs text-gray-500">
-                                +{submission.projectTechTags.length - 3} daha
+                                +{(submission.projectTechTags || []).length - 3} daha
                               </span>
                             )}
                           </div>
@@ -345,10 +372,20 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
-                          <button className="text-blue-600 hover:text-blue-900">
+                          <button 
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Görüntüle"
+                          >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button className="text-red-600 hover:text-red-900">
+                          <button 
+                            onClick={() => handleDelete(submission.id)}
+                            disabled={deletingId === submission.id}
+                            className={`text-red-600 hover:text-red-900 ${
+                              deletingId === submission.id ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                            title="Sil"
+                          >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>

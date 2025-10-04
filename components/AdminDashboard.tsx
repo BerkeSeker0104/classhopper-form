@@ -49,7 +49,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+      if (user && user.email === 'admin@classhopper.com') {
         setUser(user);
       } else {
         setUser(null);

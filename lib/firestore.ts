@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, doc, deleteDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCBmUwRjyPSTrIbO_adPnQ-2n7bChsp7bc",
@@ -49,6 +49,18 @@ export const firestoreService = {
     } catch (error) {
       console.error('Error fetching submissions:', error);
       return { success: false, error: error, data: [] };
+    }
+  },
+
+  // Submission sil
+  async deleteSubmission(id: string) {
+    try {
+      const submissionRef = doc(db, 'submissions', id);
+      await deleteDoc(submissionRef);
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting submission:', error);
+      return { success: false, error: error };
     }
   }
 };
