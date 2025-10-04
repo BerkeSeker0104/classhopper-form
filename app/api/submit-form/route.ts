@@ -7,7 +7,7 @@ const projectSchema = z.object({
   projectName: z.string().min(2).max(200),
   projectSummary: z.string().min(10).max(1000),
   projectCategory: z.enum(['software', 'robotics', 'design', 'ai', 'mobile', 'web', 'other']),
-  projectTechTags: z.array(z.string().max(50)).min(1).max(10),
+  projectTechTags: z.array(z.string().max(50)).max(10).optional().default([]),
   projectStatus: z.enum(['idea', 'active', 'completed', 'paused']),
 });
 

@@ -15,7 +15,7 @@ const projectSchema = z.object({
   projectName: z.string().min(2, 'Proje adı en az 2 karakter olmalı').max(200, 'Proje adı en fazla 200 karakter olabilir'),
   projectSummary: z.string().min(10, 'Proje açıklaması en az 10 karakter olmalı').max(1000, 'Proje açıklaması en fazla 1000 karakter olabilir'),
   projectCategory: z.enum(['software', 'robotics', 'design', 'ai', 'mobile', 'web', 'other'], { required_error: 'Kategori seçin' }),
-  projectTechTags: z.array(z.string().max(50)).min(1, 'En az bir teknoloji etiketi ekleyin').max(10, 'En fazla 10 etiket ekleyebilirsiniz'),
+  projectTechTags: z.array(z.string().max(50)).max(10, 'En fazla 10 etiket ekleyebilirsiniz').optional().default([]),
   projectStatus: z.enum(['idea', 'active', 'completed', 'paused'], { required_error: 'Durum seçin' }),
 });
 
@@ -470,7 +470,7 @@ export default function FormPage() {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Teknoloji Etiketleri *</label>
+                      <label className="form-label">Teknoloji Etiketleri (Opsiyonel)</label>
                       <div className="space-y-3">
                         <div className="flex flex-col sm:flex-row gap-2">
                           <input
