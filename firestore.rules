@@ -1,73 +1,123 @@
 rules_version = '2';
+
 service cloud.firestore {
-	match /databases/{database}/documents {
-		// ---------------------------------------------------------
-		// Rowy rules start
-		// ---------------------------------------------------------
-		// Automatically generated and managed by Rowy
-		// ⚠️ Do not edit this block directly, as it will be overwritten
-		// To edit the security rules, please do it on different block or manage from rowy settings
-		// initialized on 9/24/2025
-		match /{collectionId}/{docId} {
-			allow read: if colRule(["classhopper-mobile"], ["ADMIN","EDITOR","VIEWER","OWNER"]);
-			allow create, update, delete: if colRule(["classhopper-mobile"], ["ADMIN","OWNER"]);
-			
-			function colRule(collections, roles){
-				return collectionId in collections && hasAnyRole(roles);
-			}
-			
-		}
-		// ---------------------------------------------------------
-		// Rowy rules end
-		// ---------------------------------------------------------
-		
-		// BEKLEME LİSTESİ İÇİN PUBLIC ERIŞIM
-		match /waitlist/{document} {
-			allow read, write: if true;
-		}
-		
-		// FORM SUBMISSIONS İÇİN PUBLIC ERIŞIM
-		match /formSubmissions/{submissionId} {
-			allow read: if hasAnyRole(["ADMIN", "OWNER", "EDITOR", "VIEWER"]); // Sadece adminler okuyabilir
-			allow write: if true; // Herkes form gönderebilir
-		}
-		
-		// SUBMISSIONS COLLECTION İÇİN ADMIN ERIŞIM
-		match /submissions/{submissionId} {
-			allow read: if request.auth != null; // Giriş yapmış herkes okuyabilir
-			allow write: if true; // Herkes form gönderebilir
-		}
-		
-		// Allow admins to read and write all documents
-		match /{document=**} {
-			allow read, write: if hasAnyRole(["ADMIN", "OWNER"]);
-		}
-		
-		// Rowy: Allow signed in users to read Rowy configuration and admins to write
-		match /_rowy_/{docId} {
-			allow read: if request.auth.token.roles.size() > 0;
-			allow write: if hasAnyRole(["ADMIN", "OWNER"]);
-			match /{document=**} {
-				allow read: if request.auth.token.roles.size() > 0;
-				allow write: if hasAnyRole(["ADMIN", "OWNER"]);
-			}
-		}
-		// Rowy: Allow users to edit their settings
-		match /_rowy_/userManagement/users/{userId} {
-			allow get, update, delete: if isDocOwner(userId);
-			allow create: if request.auth.token.roles.size() > 0;
-		}
-		// Rowy: Allow public to read public Rowy configuration
-		match /_rowy_/publicSettings {
-			allow get: if true;
-		}
-		
-		// Rowy: Utility functions
-		function isDocOwner(docId) {
-			return request.auth != null && (request.auth.uid == resource.id || request.auth.uid == docId);
-		}
-		function hasAnyRole(roles) {
-			return request.auth != null && request.auth.token.roles.hasAny(roles);
-		}
-	}
+  match /databases/{database}/documents {
+    // Form submissions collection - allow anonymous submissions
+    match /submissions/{submissionId} {
+      // Allow anyone to create form submissions (for the website form)
+      allow create: if true;
+      
+      // Only authenticated users can read submissions (for admin dashboard)
+      allow read: if request.auth != null;
+      
+      // Only authenticated users can update/delete submissions
+      allow update, delete: if request.auth != null;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Projects collection
+    match /projects/{projectId} {
+      // Anyone can read public projects
+      allow read: if request.auth != null;
+      
+      // Only authenticated users can create projects
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.ownerId;
+      
+      // Only project owner can update/delete
+      allow update, delete: if request.auth != null 
+        && request.auth.uid == resource.data.ownerId;
+    }
+    
+    // Clans collection
+    match /clans/{clanId} {
+      // Anyone can read clans
+      allow read: if request.auth != null;
+      
+      // Only authenticated users can create clans
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.ownerId;
+      
+      // Only clan owner can update/delete
+      allow update, delete: if request.auth != null 
+        && request.auth.uid == resource.data.ownerId;
+    }
+    
+    // Chat messages collection
+    match /chats/{chatId}/messages/{messageId} {
+      // Only authenticated users can read/write messages
+      allow read, write: if request.auth != null;
+    }
+    
+    // Favorites collection
+    match /favorites/{favoriteId} {
+      // Users can read their own favorites by document ID
+      allow read: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      
+      // Only authenticated users can create favorites
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId;
+      
+      // Users can only delete their own favorites
+      allow delete: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      
+      // Allow list operations (queries) for authenticated users
+      allow list: if request.auth != null;
+    }
+    
+    // Member stats collection
+    match /member_stats/{statsId} {
+      // Users can read stats for projects/clans they're members of
+      allow read: if request.auth != null;
+      
+      // Users can create/update their own stats
+      allow create, update: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId;
+      
+      // Users can delete their own stats
+      allow delete: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+    }
+    
+    // Roles collection
+    match /roles/{roleId} {
+      // Users can read roles for projects/clans they're members of
+      allow read: if request.auth != null;
+      
+      // Only authenticated users can create/update roles
+      allow create, update: if request.auth != null;
+      
+      // Users can delete roles (with proper permissions)
+      allow delete: if request.auth != null;
+    }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      
+      // Only authenticated users can create notifications
+      allow create: if request.auth != null;
+      
+      // Users can update their own notifications (mark as read, archive)
+      allow update: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      
+      // Users can delete their own notifications
+      allow delete: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+    }
+    
+    // Default rule: deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
 }

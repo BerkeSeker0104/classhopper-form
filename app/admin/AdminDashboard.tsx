@@ -3,6 +3,15 @@
 import { useState, useEffect } from 'react';
 import { Users, Download, Eye, Trash2, Search, Filter, BarChart3, TrendingUp } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import FormDetailsModal from '@/components/FormDetailsModal';
+
+interface Project {
+  projectName: string;
+  projectSummary: string;
+  projectCategory: string;
+  projectTechTags: string[];
+  projectStatus: string;
+}
 
 interface FormSubmission {
   id: string;
@@ -19,12 +28,8 @@ interface FormSubmission {
   clanName: string;
   clanRole: 'leader' | 'member';
   
-  // Proje Bilgileri
-  projectName: string;
-  projectSummary: string;
-  projectCategory: string;
-  projectTechTags: string[];
-  projectStatus: string;
+  // Proje Bilgileri (artık array)
+  projects: Project[];
   
   // Meta
   submittedAt: any; // Firestore Timestamp
@@ -39,6 +44,8 @@ export default function AdminDashboard() {
   const [filterUniversity, setFilterUniversity] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState<FormSubmission | null>(null);
 
   // Firestore'dan veri çek
   useEffect(() => {
@@ -71,16 +78,22 @@ export default function AdminDashboard() {
       submission.university.toLowerCase().includes(searchTerm.toLowerCase()) ||
       submission.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
       submission.clanName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      submission.projectName.toLowerCase().includes(searchTerm.toLowerCase());
+      submission.projects.some(project => 
+        project.projectName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     
     const matchesUniversity = !filterUniversity || submission.university === filterUniversity;
-    const matchesCategory = !filterCategory || submission.projectCategory === filterCategory;
+    const matchesCategory = !filterCategory || submission.projects.some(project => 
+      project.projectCategory === filterCategory
+    );
     
     return matchesSearch && matchesUniversity && matchesCategory;
   });
 
   const uniqueUniversities = Array.from(new Set(submissions.map(s => s.university)));
-  const uniqueCategories = Array.from(new Set(submissions.map(s => s.projectCategory)));
+  const uniqueCategories = Array.from(new Set(
+    submissions.flatMap(s => s.projects.map(p => p.projectCategory))
+  ));
 
   // Silme fonksiyonu
   const handleDelete = async (id: string) => {
@@ -108,6 +121,16 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleViewDetails = (submission: FormSubmission) => {
+    setSelectedSubmission(submission);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedSubmission(null);
+  };
+
   const exportToCSV = () => {
     if (filteredSubmissions.length === 0) return;
     
@@ -120,23 +143,25 @@ export default function AdminDashboard() {
     
     const csvContent = [
       headers.join(','),
-      ...filteredSubmissions.map(submission => [
-        submission.firstName,
-        submission.lastName,
-        submission.email,
-        submission.phone,
-        submission.university,
-        submission.department,
-        submission.classYear,
-        submission.clanName,
-        submission.clanRole === 'leader' ? 'Lider' : 'Üye',
-        submission.projectName,
-        `"${submission.projectSummary}"`,
-        submission.projectCategory,
-        `"${submission.projectTechTags.join(', ')}"`,
-        submission.projectStatus,
-        formatDate(submission.submittedAt?.toDate?.() || new Date())
-      ].join(','))
+      ...filteredSubmissions.flatMap(submission => 
+        submission.projects.map(project => [
+          submission.firstName,
+          submission.lastName,
+          submission.email,
+          submission.phone,
+          submission.university,
+          submission.department,
+          submission.classYear,
+          submission.clanName,
+          submission.clanRole === 'leader' ? 'Lider' : 'Üye',
+          project.projectName,
+          `"${project.projectSummary}"`,
+          project.projectCategory,
+          `"${project.projectTechTags.join(', ')}"`,
+          project.projectStatus,
+          formatDate(submission.submittedAt?.toDate?.() || new Date())
+        ].join(','))
+      )
     ].join('\n');
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -261,8 +286,8 @@ export default function AdminDashboard() {
               className="select"
             >
               <option value="">Tüm Üniversiteler</option>
-              {uniqueUniversities.map(university => (
-                <option key={university} value={university}>
+              {uniqueUniversities.map((university, index) => (
+                <option key={`university-${index}`} value={university}>
                   {university}
                 </option>
               ))}
@@ -274,8 +299,8 @@ export default function AdminDashboard() {
               className="select"
             >
               <option value="">Tüm Kategoriler</option>
-              {uniqueCategories.map(category => (
-                <option key={category} value={category}>
+              {uniqueCategories.map((category, index) => (
+                <option key={`category-${index}`} value={category}>
                   {category}
                 </option>
               ))}
@@ -347,24 +372,35 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-6 py-4">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {submission.projectName}
-                          </div>
-                          <div className="text-sm text-gray-500 line-clamp-2">
-                            {submission.projectSummary}
-                          </div>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {(submission.projectTechTags || []).slice(0, 3).map(tag => (
-                              <span key={tag} className="badge badge-outline text-xs">
-                                {tag}
-                              </span>
-                            ))}
-                            {(submission.projectTechTags || []).length > 3 && (
-                              <span className="text-xs text-gray-500">
-                                +{(submission.projectTechTags || []).length - 3} daha
-                              </span>
-                            )}
-                          </div>
+                          {submission.projects && submission.projects.length > 0 ? (
+                            <>
+                              <div className="text-sm font-medium text-gray-900">
+                                {submission.projects[0].projectName}
+                              </div>
+                              <div className="text-sm text-gray-500 line-clamp-2">
+                                {submission.projects[0].projectSummary}
+                              </div>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {(submission.projects[0].projectTechTags || []).slice(0, 3).map((tag, index) => (
+                                  <span key={index} className="badge badge-outline text-xs">
+                                    {tag}
+                                  </span>
+                                ))}
+                                {(submission.projects[0].projectTechTags || []).length > 3 && (
+                                  <span className="text-xs text-gray-500">
+                                    +{(submission.projects[0].projectTechTags || []).length - 3} daha
+                                  </span>
+                                )}
+                              </div>
+                              {submission.projects.length > 1 && (
+                                <div className="text-xs text-blue-600 mt-1">
+                                  +{submission.projects.length - 1} proje daha
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <div className="text-sm text-gray-500">Proje bilgisi yok</div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -373,6 +409,7 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           <button 
+                            onClick={() => handleViewDetails(submission)}
                             className="text-blue-600 hover:text-blue-900"
                             title="Görüntüle"
                           >
@@ -398,6 +435,13 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Form Details Modal */}
+      <FormDetailsModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        submission={selectedSubmission}
+      />
     </div>
   );
 }
